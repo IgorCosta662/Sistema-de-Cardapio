@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  postgres-prod:
+    image: postgres:16-alpine
+    container_name: mesaviva-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - mesaviva_pgdata_prod:/var/lib/postgresql/data
+    networks:
+      - mesaviva-internal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  edge-api-prod:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.prod
+    container_name: mesaviva-edge-server-prod
+    restart: always
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: https://+:443;http://+:80
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/mesaviva-local.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: ${TLS_CERT_PASSWORD}
+      SQL_HOST: postgres-prod
+      SQL_PORT: 5432
+      SQL_DB_NAME: ${POSTGRES_DB}
+      SQL_USER: ${POSTGRES_USER}
+      SQL_PASSWORD: ${POSTGRES_PASSWORD}
+      STAFF_TOKEN_SECRET: ${STAFF_TOKEN_SECRET}
+      CLOUD_SYNC_ENDPOINT: ${CLOUD_SYNC_ENDPOINT}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/https:ro
+    networks:
+      - mesaviva-internal-net
+
+volumes:
+  mesaviva_pgdata_prod:
+
+networks:
+  mesaviva-internal-net:
+    driver: bridge

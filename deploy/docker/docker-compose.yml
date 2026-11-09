@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mesaviva-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: mesaviva_db
+      POSTGRES_USER: mesaviva_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mesaviva_local_2026}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mesaviva_admin -d mesaviva_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  local-edge-server:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: mesaviva-edge-node
+    restart: always
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      CLIENT_PORT: "3000"
+      STAFF_PORT: "3001"
+      STRICT_PORT_SEPARATION: "true"
+      SQL_HOST: postgres
+      SQL_PORT: "5432"
+      SQL_DB_NAME: mesaviva_db
+      SQL_USER: mesaviva_admin
+      SQL_PASSWORD: ${POSTGRES_PASSWORD:-mesaviva_local_2026}
+      SQL_ADMIN_USER: mesaviva_admin
+      SQL_ADMIN_PASSWORD: ${POSTGRES_PASSWORD:-mesaviva_local_2026}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

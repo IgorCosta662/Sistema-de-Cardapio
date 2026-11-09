@@ -1,0 +1,6 @@
+{
+  "name": "Mesa Viva — Sistema Profissional de Cardápio Digital, Mesas, Garçons e Pedidos",
+  "description": "Plataforma corporativa completa para restaurantes, bares e pizzarias com cardápio digital por sessão temporária de mesa, operação de garçons, painel KDS de cozinha em tempo real, frente de caixa, auditoria e sincronização local/nuvem resiliente.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
